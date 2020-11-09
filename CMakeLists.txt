@@ -21,11 +21,14 @@ option(ENABLE_DOCTESTS "Include tests in the library. Setting this to OFF will r
                         Tests in tests/*.cpp will still be enabled." ON)
 
 # Include stuff. No change needed.
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/" "${CMAKE_SOURCE_DIR}/external/clex/cmake")
 include(ConfigSafeGuards)
 include(Colors)
 include(CTest)
 include(Doctest)
+include(CLex)
+include(GLog)
+include(HatTrie)
 include(Documentation)
 include(LTO)
 include(Misc)
@@ -39,6 +42,7 @@ find_lto(CXX)
 # --------------------------------------------------------------------------------
 set(SOURCES          # All .cpp files in src/
     src/example.cpp
+    src/table.cpp
 )
 set(TESTFILES        # All .cpp files in tests/
     tests/main.cpp
@@ -55,7 +59,7 @@ add_library(${LIBRARY_NAME} OBJECT ${SOURCES})
 target_include_directories(${LIBRARY_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 # There's also (probably) doctests within the library, so we need to see this as well.
-target_link_libraries(${LIBRARY_NAME} PUBLIC doctest)
+target_link_libraries(${LIBRARY_NAME} PUBLIC doctest clex glog hat-trie)
 
 # Set the compile options you want (change as needed).
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
@@ -78,4 +82,4 @@ set_target_properties(
 )
 
 # Set up tests (see tests/CMakeLists.txt).
-add_subdirectory(tests)
+#add_subdirectory(tests)
