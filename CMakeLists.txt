@@ -38,6 +38,7 @@ find_lto(CXX)
 set(SOURCES          # All .cpp files in src/
     src/example.cpp
     src/table.cpp
+    src/lr.cpp
 )
 
 set(LIBRARY_NAME engine)  # Default name for the library built from src/*.cpp (change if you wish)
@@ -69,7 +70,7 @@ target_enable_lto(main optimized)  # enable link-time-optimization if available 
 set_target_properties(
     ${LIBRARY_NAME} main
       PROPERTIES 
-        CXX_STANDARD 17 
+        CXX_STANDARD 17
         CXX_STANDARD_REQUIRED YES 
         CXX_EXTENSIONS NO
 )

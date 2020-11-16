@@ -9,7 +9,7 @@ map<char, set<Token>> getFirst(G &g) {
   while (true) {
     for (auto &p : g.P) {
       if (p.second.size() == 0) {
-        first[p.first].insert(Token(NULL, Token::TokenType::Null));
+        first[p.first].insert(Token(Token::TokenType::Null));
         continue;
       }
       if (p.second[0].is_t()) {
@@ -20,7 +20,7 @@ map<char, set<Token>> getFirst(G &g) {
         while (has_theta) {
           has_theta = false;
           if (i >= p.second.size()) {
-            first[p.first].insert(Token(NULL, Token::TokenType::Null));
+            first[p.first].insert(Token(Token::TokenType::Null));
             break;
           }
           for (auto &c : first[p.second[i].as_n()]) {
@@ -51,7 +51,7 @@ map<char, set<Token>> getFollow(G &g, map<char, set<Token>> &first) {
   for (auto &vn : g.V_n) {
     follow.insert(make_pair(vn, set<Token>()));
   }
-  follow[g.start].insert(Token(NULL, Token::TokenType::Null));
+  follow[g.start].insert(Token(Token::TokenType::Null));
   int count = 1;
   while (true) {
     for (auto &p : g.P) {
@@ -96,9 +96,9 @@ map<char, set<Token>> getFollow(G &g, map<char, set<Token>> &first) {
   return follow;
 }
 
-map<pair<char, Token>, vector<V>> buildTable(G &g, map<char, set<Token>> &first,
-                                             map<char, set<Token>> &follow) {
-  map<pair<char, Token>, vector<V>> table;
+Table buildTable(G &g, map<char, set<Token>> &first,
+                 map<char, set<Token>> &follow) {
+  Table table;
   for (auto &p : g.P) {
     size_t i = 0;
     bool has_theta = true;
@@ -125,4 +125,44 @@ map<pair<char, Token>, vector<V>> buildTable(G &g, map<char, set<Token>> &first,
     }
   }
   return table;
+}
+
+inline Token at(vector<Token> &w, size_t index) {
+  if (index >= w.size()) {
+    return Token(Token::TokenType::Null);
+  } else {
+    return w[index];
+  }
+}
+
+bool test(Table &M, char start, vector<Token> &w) {
+  stack<V> s({V(start)});
+
+  size_t ip = 0;
+  do {
+    auto x = s.top();
+    auto a = at(w, ip);
+    if (x.is_t()) {
+      if (x.as_t() == a) {
+        s.pop();
+        ip++;
+      } else {
+        return false;
+      }
+    } else {
+      auto result = M.find(make_pair(x.as_n(), a));
+      if (result != M.end()) {
+        s.pop();
+        for (auto v = result->second.rbegin(); v != result->second.rend();
+             v++) {
+          s.push(*v);
+        }
+      } else {
+        return false;
+      }
+      cout << result->first.first << endl;
+    }
+
+  } while (!s.empty());
+  return true;
 }

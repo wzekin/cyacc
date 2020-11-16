@@ -1,5 +1,8 @@
+#ifndef TABLE_H
+#define TABLE_H
 #include <map>
 #include <set>
+#include <stack>
 #include <type.h>
 #include <utility>
 #include <vector>
@@ -9,19 +12,24 @@ using namespace std;
 #define THETA 0
 #define END 1
 
-class V {
+class V
+{
 public:
   V(char n) : type(Type::N) { this->value.n = n; }
   V(Token t) : type(Type::T) { this->value.t = t; }
+  V(Token::TokenType t) : type(Type::T) { this->value.t = t; }
+  V(OpType o) : type(Type::T) { this->value.t = o; }
 
-  union Value {
+  union Value
+  {
     char n;  //非终结符数据
     Token t; //终结符数据
 
     Value() : n(0) {}
   };
 
-  enum class Type {
+  enum class Type
+  {
     N, //非终结符
     T  //终结符
   };
@@ -31,27 +39,21 @@ public:
 
   inline char as_n() const { return this->value.n; }
   inline Token as_t() const { return this->value.t; }
-  inline bool operator==(const V &other) const {
-    if (this->is_t() && other.is_t()) {
+  inline bool operator==(const V &other) const
+  {
+    if (this->is_t() && other.is_t())
+    {
       return this->as_t() == other.as_t();
-    } else if (this->is_n() && other.is_n()) {
+    }
+    else if (this->is_n() && other.is_n())
+    {
       return this->as_n() == other.as_n();
-    } else {
+    }
+    else
+    {
       return false;
     }
   }
-
-  // inline bool operator<(const V &other) const {
-  //   if (this->is_t() && other.is_t()) {
-  //     return this->as_t() < other.as_t();
-  //   } else if (this->is_n() && other.is_n()) {
-  //     return this->as_n() < other.as_n();
-  //   } else if (this->is_n() && other.is_t()) {
-  //     return true;
-  //   } else {
-  //     return false;
-  //   }
-  // }
 
 private:
   Value value;
@@ -59,7 +61,8 @@ private:
 };
 
 // 文法
-class G {
+class G
+{
 public:
   G(set<Token> V_t, set<char> V_n, char start, vector<pair<char, vector<V>>> P)
       : V_t(V_t), V_n(V_n), start(start), P(P){};
@@ -72,7 +75,13 @@ public:
   vector<pair<char, vector<V>>> P; //产生式
 };
 
-map<char, set<Token>> getFirst(G& g);
-map<char, set<Token>> getFollow(G& g, map<char, set<Token>> &first);
-map<pair<char, Token>, vector<V>> buildTable(G& g, map<char, set<Token>> &first,
-                                             map<char, set<Token>> &follow);
+typedef map<pair<char, Token>, vector<V>> Table;
+
+map<char, set<Token>> getFirst(G &g);
+map<char, set<Token>> getFollow(G &g, map<char, set<Token>> &first);
+Table buildTable(G &g, map<char, set<Token>> &first,
+                 map<char, set<Token>> &follow);
+
+bool test(Table &M, char start, vector<Token> &w);
+
+#endif
