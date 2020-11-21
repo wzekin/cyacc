@@ -127,7 +127,7 @@ Table buildTable(G &g, map<char, set<Token>> &first,
   return table;
 }
 
-inline Token at(vector<Token> &w, size_t index) {
+inline Token at(vector<Token> const &w, size_t index) {
   if (index >= w.size()) {
     return Token(Token::TokenType::Null);
   } else {
@@ -135,16 +135,16 @@ inline Token at(vector<Token> &w, size_t index) {
   }
 }
 
-bool test(Table &M, char start, vector<Token> &w) {
-  stack<V> s({V(start)});
+bool test(Table &M, char start, vector<Token> const &w) {
+  vector<V> s({V(start)});
 
   size_t ip = 0;
   do {
-    auto x = s.top();
+    auto x = s[s.size() - 1];
     auto a = at(w, ip);
     if (x.is_t()) {
       if (x.as_t() == a) {
-        s.pop();
+        s.pop_back();
         ip++;
       } else {
         return false;
@@ -152,17 +152,23 @@ bool test(Table &M, char start, vector<Token> &w) {
     } else {
       auto result = M.find(make_pair(x.as_n(), a));
       if (result != M.end()) {
-        s.pop();
+        s.pop_back();
         for (auto v = result->second.rbegin(); v != result->second.rend();
              v++) {
-          s.push(*v);
+          s.push_back(*v);
         }
       } else {
         return false;
       }
-      cout << result->first.first << endl;
+      if (result->second.size()) {
+        cout << fmt::format("{}->{}\t{}", result->first.first,
+                            fmt::join(result->second, ""), fmt::join(s, " "))
+             << endl;
+      } else {
+        cout << fmt::format("{}->ε\t{}", result->first.first, fmt::join(s, " "))
+             << endl;
+      }
     }
-
   } while (!s.empty());
   return true;
 }

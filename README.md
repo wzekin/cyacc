@@ -1,108 +1,496 @@
-[![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
-[![Build Status](https://travis-ci.org/bsamseth/cpp-project.svg?branch=master)](https://travis-ci.org/bsamseth/cpp-project)
-[![Build status](https://ci.appveyor.com/api/projects/status/g9bh9kjl6ocvsvse/branch/master?svg=true)](https://ci.appveyor.com/project/bsamseth/cpp-project/branch/master)
-[![Coverage Status](https://coveralls.io/repos/github/bsamseth/cpp-project/badge.svg?branch=master)](https://coveralls.io/github/bsamseth/cpp-project?branch=master)
-[![codecov](https://codecov.io/gh/bsamseth/cpp-project/branch/master/graph/badge.svg)](https://codecov.io/gh/bsamseth/cpp-project)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/eb004322b0d146239a57eb242078e179)](https://www.codacy.com/app/bsamseth/cpp-project?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=bsamseth/cpp-project&amp;utm_campaign=Badge_Grade)
-[![Language grade: C/C++](https://img.shields.io/lgtm/grade/cpp/g/bsamseth/cpp-project.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/bsamseth/cpp-project/context:cpp)
-[![Total alerts](https://img.shields.io/lgtm/alerts/g/bsamseth/cpp-project.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/bsamseth/cpp-project/alerts/)
-[![license](https://img.shields.io/badge/license-Unlicense-blue.svg)](https://github.com/bsamseth/cpp-project/blob/master/LICENSE)
-[![Lines of Code](https://tokei.rs/b1/github/bsamseth/cpp-project)](https://github.com/Aaronepower/tokei)
-[![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/bsamseth/cpp-project.svg)](http://isitmaintained.com/project/bsamseth/cpp-project "Average time to resolve an issue")
-[![Percentage of issues still open](http://isitmaintained.com/badge/open/bsamseth/cpp-project.svg)](http://isitmaintained.com/project/bsamseth/cpp-project "Percentage of issues still open")
+# C语言语法分析程序的设计与实现
 
-# Boiler plate for C++ projects 
+> 2018211236 王泽坤
 
-This is a boiler plate for C++ projects. What you get:
+## 概述
 
--   Sources, headers and mains separated in distinct folders
--   Use of modern [CMake](https://cmake.org/) for much easier compiling
--   Setup for tests using [doctest](https://github.com/onqtam/doctest)
--   Continuous testing with [Travis-CI](https://travis-ci.org/), [Appveyor](https://www.appveyor.com) and [GitHub Actions](https://github.com/features/actions), with support for C++17.
--   Code coverage reports, including automatic upload to [Coveralls.io](https://coveralls.io/) and/or [Codecov.io](https://codecov.io)
--   Code documentation with [Doxygen](http://www.stack.nl/~dimitri/doxygen/)
+### 实验内容及要求
+* 编写LL(1)语法分析程序，要求如下。
+    1. 编程实现算法4.2，为给定文法自动构造预测分析表。
+    2. 编程实现算法4.1，构造LL(1)预测分析程序 。
+* 编写语法分析程序实现自底向上的分析，要求如下。
+    1. 构造识别该文法所有活前缀的DFA。
+    2. 构造该文法的LR分析表。
+    3. 编程实现算法4.3，构造LR分析程序。 
 
-![Demo of usage](https://i.imgur.com/foymVfy.gif)
+### 实验环境
 
-## Structure
-``` text
-.
-├── CMakeLists.txt
-├── app
-│   └── main.cpp
-├── include
-│   ├── example.h
-│   └── exampleConfig.h.in
-├── src
-│   └── example.cpp
-└── tests
-    ├── dummy.cpp
-    └── main.cpp
+* 操作系统：Linux
+* 编程语言：C++
+
+### Feature
+* 是用了词法分析时库，支持解析一个文本文件，先进行词法分析，再进行语法分析
+
+## 程序设计说明
+
+
+### LL语法构造
+* `class G` 文法类
+    ``` c++
+    class G {
+    public:
+    	G(set<Token> V_t, set<char> V_n, char start, vector<pair<char, vector<V>>> P)
+        	: V_t(V_t), V_n(V_n), start(start), P(P){};
+
+        set<Token> V_t; //终结符
+        set<char> V_n;  //非终结符
+
+        char start;
+
+        vector<pair<char, vector<V>>> P; //产生式
+    };
+    ```
+
+    * 一个set包含文法的所有终结符
+    * 一个set包含文法的所有非终结符
+    * 一个vector包含文法的所有产生式
+
+* `map<char, set<Token>> getFirst(G &g)`
+    
+* 输入一个文法，得到这个文法的`FIRST`集，要求文法没有左递归和左公因式
+    
+* `map<char, set<Token>> getFollow(G &g, map<char, set<Token>> &first)`
+    
+* 输入一个文法和这个文法的`FIRST`集，得到这个文法的`FOLLOW`集，要求文法没有左递归和左公因式
+    
+* `Table buildTable(G &g, map<char, set<Token>> &first,map<char, set<Token>> &follow)`
+    
+* 输入一个文法和它的`FIRST`和`FOLLOW`集，得到这个文法的预测分析表，实现算法4.2
+    
+* `bool test(Table &M, char start, vector<Token> const &w)`
+    
+    * 输入一个文法的预测分析表和起始文法，预测输入的Token流是否合法
+
+### LR语法构造
+*  `class LR`
+    ``` c++
+    class LR {
+    public:
+        map<pair<unsigned, Token>, Action> action;
+        map<pair<unsigned, char>, unsigned> goto_;
+        vector<pair<char, vector<V>>> P; //产生式
+
+        bool test(vector<Token> const &w);
+    };
+    ```
+    * 一个map表示action表
+    * 一个map表示goto表
+    * 一个vector包含文法的产生式
+
+*  `bool test(vector<Token> const &w)`
+    
+    * 输入一个文法，预测输入的Token流是否合法
+
+## 测试程序
+
+### 测试1
+* 源代码
+``` c
+(1 + 3 + 4 + 2 + 1) / (2 + 3)
 ```
 
-Sources go in [src/](src/), header files in [include/](include/), main programs in [app/](app), and
-tests go in [tests/](tests/) (compiled to `unit_tests` by default). 
+* 输出
+```
+tokens: (,<num>,+,<num>,+,<num>,+,<num>,+,<num>,),/,(,<num>,+,<num>,)
+LL(1)文法：
+E->TA   A T
+T->FC   A C F
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->DC   A C D
+D->/F   A C F /
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->ε    A
+A->ε
+识别成功
 
-If you add a new executable, say `app/hello.cpp`, you only need to add the following two lines to [CMakeLists.txt](CMakeLists.txt): 
-
-``` cmake
-add_executable(main app/main.cpp)   # Name of exec. and location of file.
-target_link_libraries(main PRIVATE ${LIBRARY_NAME})  # Link the executable to lib built from src/*.cpp (if it uses it).
+SLR(1)文法：
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[移进]/
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[规约]E->T
+识别成功
 ```
 
-You can find the example source code that builds the `main` executable in [app/main.cpp](app/main.cpp) under the `Build` section in [CMakeLists.txt](CMakeLists.txt). 
-If the executable you made does not use the library in [src/](src), then only the first line is needed.
-
-
-
-## Building
-
-Build by making a build directory (i.e. `build/`), run `cmake` in that dir, and then use `make` to build the desired target.
-
-Example:
-
-``` bash
-> mkdir build && cd build
-> cmake .. -DCMAKE_BUILD_TYPE=[Debug | Coverage | Release]
-> make
-> ./main
-> make test      # Makes and runs the tests.
-> make coverage  # Generate a coverage report.
-> make doc       # Generate html documentation.
+### 测试2
+* 源代码
+``` c
+(1+2) * (3+4) / (4-3) + (5+6)
 ```
 
-## .gitignore
+* 输出
+```
+tokens: (,<num>,+,<num>,),*,(,<num>,+,<num>,),/,(,<num>,-,<num>,),+,(,<num>,+,<num>,)
+LL(1)文法：
+E->TA   A T
+T->FC   A C F
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->DC   A C D
+D->*F   A C F *
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->DC   A C D
+D->/F   A C F /
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->-T   A C ) A T -
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F->(E)  A C ) E (
+E->TA   A C ) A T
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->BA   A C ) A B
+B->+T   A C ) A T +
+T->FC   A C ) A C F
+F-><num>        A C ) A C <num>
+C->ε    A C ) A
+A->ε    A C )
+C->ε    A
+A->ε
+识别成功
 
-The [.gitignore](.gitignore) file is a copy of the [Github C++.gitignore file](https://github.com/github/gitignore/blob/master/C%2B%2B.gitignore),
-with the addition of ignoring the build directory (`build/`).
-
-## Services
-
-If the repository is activated with Travis-CI, then unit tests will be built and executed on each commit.
-The same is true if the repository is activated with Appveyor.
-
-If the repository is activated with Coveralls/Codecov, then deployment to Travis will also calculate code coverage and
-upload this to Coveralls.io and/or Codecov.io
-
-## Setup
-
-### Using the GitHub template
-Click the `Use this template` button to make a new repository from this template.
-
-**NB**: GitHub templates do not carry over submodules, which means you need to add those back _before_ you can build the project. Run the following after you have generated your new project:
-``` bash
-> git clone https://github.com/<your-username>/<your-repo-name>
-> git submodule add https://github.com/onqtam/doctest.git external/doctest
-> git commit -a --amend --no-edit
-> git push --force
+SLR(1)文法：
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[移进]*
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[移进]/
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]-
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E-T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进](
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进])
+[规约]F->(E)
+[规约]T->F
+[规约]E->E+T
+识别成功
 ```
 
-### From command line
-When starting a new project, you probably don't want the history of this repository. To start fresh you can use
-the [setup script](setup.sh) as follows:
-``` bash
-> git clone --recurse-submodules https://github.com/bsamseth/cpp-project  # Or use ssh-link if you like.
-> cd cpp-project
-> bash setup.sh
+### 测试3
+* 源代码
+``` c
+1 + 1+1+1+1+1/1/1/1/1/1/1/1/1/1/1/1/11/1/1/1
 ```
-The result is a fresh Git repository with one commit adding all files from the boiler plate. 
+
+* 输出结果
+```
+
+tokens: <num>,+,<num>,+,<num>,+,<num>,+,<num>,+,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>,/,<num>
+LL(1)文法：
+E->TA   A T
+T->FC   A C F
+F-><num>        A C <num>
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F-><num>        A C <num>
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F-><num>        A C <num>
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F-><num>        A C <num>
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F-><num>        A C <num>
+C->ε    A
+A->BA   A B
+B->+T   A T +
+T->FC   A C F
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->DC   A C D
+D->/F   A C F /
+F-><num>        A C <num>
+C->ε    A
+A->ε
+识别成功
+
+SLR(1)文法：
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[规约]E->E+T
+[移进]+
+[移进]<num>
+[规约]F-><num>
+[规约]T->F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[移进]/
+[移进]<num>
+[规约]F-><num>
+[规约]T->T/F
+[规约]E->E+T
+识别成功
+```

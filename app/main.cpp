@@ -9,17 +9,20 @@
 #include "lr.h"
 #include "table.h"
 #include <iostream>
+#include <lex.h>
 #include <stdlib.h>
 #include <type.h>
-
-#include "example.h"
-#include "exampleConfig.h"
 
 /*
  * Simple main program that demontrates how access
  * CMake definitions (here the version number) from source code.
  */
 int main() {
+  Lex lex = Lex("1.c");
+  lex.parse();
+
+  fmt::print("tokens: {}\n", fmt::join(lex.tokens(), ","));
+  fmt::print("LL(1)文法：\n");
   G g = G(set<Token>({
               Token(OpType::ADD),
               Token(OpType::SUB),
@@ -56,15 +59,20 @@ int main() {
   auto follow = getFollow(g, first);
   auto table = buildTable(g, first, follow);
 
-  auto t = vector<Token>({
-      Token::TokenType::Number,
-      OpType::ADD,
-      Token::TokenType::Number,
-      OpType::ASTERISK,
-      Token::TokenType::Number,
-  });
-  cout << test(table, 'E', t) << endl;
+  //   auto t = vector<Token>({
+  //       Token::TokenType::Number,
+  //       OpType::ADD,
+  //       Token::TokenType::Number,
+  //       OpType::ASTERISK,
+  //       Token::TokenType::Number,
+  //   });
+  if (test(table, 'E', lex.tokens())) {
+    fmt::print("识别成功\n");
+  } else {
+    fmt::print("识别失败\n");
+  }
 
+  fmt::print("\nSLR(1)文法：\n");
   auto lr = LR();
   // lr.action = map<pair<unsigned, Token>, Action>({
   //     {{0, OpType::ADD}, "s6"},
@@ -97,7 +105,7 @@ int main() {
           {"s2", "s9", 0, 0, 0, "s8", 0, 0},
           {"r7", "r7", "r7", "r7", 0, "r7", 0, "r7"},
           {0, 0, 0, 0, "s6", 0, "s12", 0},
-          {"r3", "r3", 0, 0, 0, "r3", 0, 0},
+          {"r3", "r3", 0, 0, 0, "r3", 0, "r3"},
           {0, 0, 0, 0, "s6", 0, "s12", 0},
           {"r8", "r8", "r8", "r8", 0, "r8", 0, "r8"},
           {"r5", "r5", "r5", "r5", 0, "r5", 0, "r5"},
@@ -141,11 +149,9 @@ int main() {
                      })),
   });
 
-  auto t1 = vector<Token>({
-      Token::TokenType::Number,
-      OpType::ADD,
-      Token::TokenType::Number,
-  });
-
-  cout << lr.test(t1) << endl;
+  if (lr.test(lex.tokens())) {
+    fmt::print("识别成功\n");
+  } else {
+    fmt::print("识别失败\n");
+  }
 }

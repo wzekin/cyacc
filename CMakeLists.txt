@@ -29,8 +29,6 @@ include(LTO)
 include(Misc)
 include(Warnings)
 
-add_subdirectory("./external/fmt")
-
 # Check for LTO support.
 find_lto(CXX)
 
@@ -38,7 +36,6 @@ find_lto(CXX)
 #                         Locate files (change as needed).
 # --------------------------------------------------------------------------------
 set(SOURCES          # All .cpp files in src/
-    src/example.cpp
     src/table.cpp
     src/lr.cpp
 )
@@ -55,7 +52,7 @@ add_library(${LIBRARY_NAME} OBJECT ${SOURCES})
 target_include_directories(${LIBRARY_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 # There's also (probably) doctests within the library, so we need to see this as well.
-target_link_libraries(${LIBRARY_NAME} PUBLIC clex fmt)
+target_link_libraries(${LIBRARY_NAME} PUBLIC clex fmt::fmt)
 
 # Set the compile options you want (change as needed).
 target_set_warnings(${LIBRARY_NAME} ENABLE ALL AS_ERROR ALL DISABLE Annoying)
