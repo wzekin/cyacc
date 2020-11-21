@@ -23,45 +23,115 @@
 
 ## 程序设计说明
 
-
 ### LL语法构造
+
+* 改造语法，要求的语法需要先消左递归，左公因子
+  * E -> TA
+  * A -> BA | $\epsilon$
+  * B -> +T | -T
+  
+  * T -> FC
+  * C -> DC | $\epsilon$
+  * D -> *F | /F
+  * F -> (E) | num
 * `class G` 文法类
+  
     ``` c++
     class G {
     public:
     	G(set<Token> V_t, set<char> V_n, char start, vector<pair<char, vector<V>>> P)
-        	: V_t(V_t), V_n(V_n), start(start), P(P){};
-
+    	: V_t(V_t), V_n(V_n), start(start), P(P){};
+    
         set<Token> V_t; //终结符
-        set<char> V_n;  //非终结符
-
-        char start;
-
+    set<char> V_n;  //非终结符
+    
+    char start;
+    
         vector<pair<char, vector<V>>> P; //产生式
     };
     ```
-
+    
     * 一个set包含文法的所有终结符
     * 一个set包含文法的所有非终结符
-    * 一个vector包含文法的所有产生式
-
+* 一个vector包含文法的所有产生式
+  
 * `map<char, set<Token>> getFirst(G &g)`
-    
-* 输入一个文法，得到这个文法的`FIRST`集，要求文法没有左递归和左公因式
-    
+  
+  输入一个文法，得到这个文法的`FIRST`集，要求文法没有左递归和左公因式
+  
 * `map<char, set<Token>> getFollow(G &g, map<char, set<Token>> &first)`
-    
-* 输入一个文法和这个文法的`FIRST`集，得到这个文法的`FOLLOW`集，要求文法没有左递归和左公因式
-    
+  
+  输入一个文法和这个文法的`FIRST`集，得到这个文法的`FOLLOW`集，要求文法没有左递归和左公因式
+  
 * `Table buildTable(G &g, map<char, set<Token>> &first,map<char, set<Token>> &follow)`
-    
-* 输入一个文法和它的`FIRST`和`FOLLOW`集，得到这个文法的预测分析表，实现算法4.2
-    
+  
+  输入一个文法和它的`FIRST`和`FOLLOW`集，得到这个文法的预测分析表，实现算法4.2
+  
 * `bool test(Table &M, char start, vector<Token> const &w)`
-    
+  
     * 输入一个文法的预测分析表和起始文法，预测输入的Token流是否合法
 
 ### LR语法构造
+
+* 改造语法
+  0.  S -> E
+  1. E -> E+T
+  2. E -> E-T
+  3. E -> T
+  4. T -> T * F
+  5. T -> T / F
+  6. T -> F
+  7. F -> (E)
+  8. F -> num
+* 活前缀识别
+
+<center class="half">
+ <img src="README.assets/image-20201122002754212.png" width="400"/><img src="README.assets/image-20201122002802930.png" width="400"/>
+</center>
+
+
+* action表
+
+  | +    | -    | *    | /    | (    | )    | num  | $    |
+  | ---- | ---- | ---- | ---- | ---- | ---- | ---- | ---- |
+  |      |      |      |      | s6   |      | s12  |      |
+  | s2   | s9   |      |      |      |      |      | acc  |
+  |      |      |      |      | s6   |      | s12  |      |
+  | r1   | r1   | s4   | s11  |      | r1   |      | r1   |
+  |      |      |      |      | s6   |      | s12  |      |
+  | s2   | s9   |      |      |      | s8   |      |      |
+  | r7   | r7   | r7   | r7   |      | r7   |      | r7   |
+  |      |      |      |      | s6   |      | s12  |      |
+  | r3   | r3   |      |      |      | r3   |      | r3   |
+  |      |      |      |      | s6   |      | s12  |      |
+  | r8   | r8   | r8   | r8   |      | r8   |      | r8   |
+  | r5   | r5   | r5   | r5   |      | r5   |      | r5   |
+  | r6   | r6   | r6   | r6   |      | r6   |      | r6   |
+  | r2   | r2   | s4   | s11  |      | r2   |      | r2   |
+
+* goto 表
+
+  | E    | T    | F    |
+  | ---- | ---- | ---- |
+  | 1    | 10   | 14   |
+  |      |      |      |
+  |      | 3    | 14   |
+  |      |      |      |
+  |      |      | 5    |
+  |      |      |      |
+  | 7    | 10   | 14   |
+  |      |      |      |
+  |      |      |      |
+  |      | 15   | 14   |
+  |      |      |      |
+  |      |      | 13   |
+  |      |      |      |
+  |      |      |      |
+  |      |      |      |
+  |      |      |      |
+
+  
+
 *  `class LR`
     ``` c++
     class LR {
@@ -78,7 +148,7 @@
     * 一个vector包含文法的产生式
 
 *  `bool test(vector<Token> const &w)`
-    
+   
     * 输入一个文法，预测输入的Token流是否合法
 
 ## 测试程序
@@ -187,9 +257,11 @@ SLR(1)文法：
 
 ### 测试2
 * 源代码
+
 ``` c
 (1+2) * (3+4) / (4-3) + (5+6)
 ```
+
 
 * 输出
 ```
